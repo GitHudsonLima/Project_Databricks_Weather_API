@@ -1,0 +1,463 @@
+{
+  "datasets": [
+    {
+      "name": "weather_metrics",
+      "displayName": "Weather Metrics",
+      "config": {
+        "source": "weather_openmeteo.gold.weather_kpis",
+        "measures": [
+          {
+            "displayName": "Temperature",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            },
+            "name": "Current Temperature",
+            "expr": "AVG(temperature)",
+            "comment": "Average temperature"
+          },
+          {
+            "displayName": "7-Day Avg Temperature",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            },
+            "name": "Avg Temperature 7D",
+            "expr": "AVG(avg_temperature_7d)",
+            "comment": "7-day rolling average temperature"
+          },
+          {
+            "name": "Has Alert",
+            "expr": "MAX(CASE WHEN alerts = true THEN 1 ELSE 0 END)",
+            "displayName": "Alert Status",
+            "comment": "Indicates if there is an active weather alert"
+          }
+        ],
+        "filter": "city IN ('Beloit', 'Janesville', 'Madison')",
+        "version": 1.1,
+        "comment": "Weather metrics for Beloit, Janesville, and Madison",
+        "dimensions": [
+          {
+            "name": "City",
+            "expr": "city",
+            "displayName": "City",
+            "comment": "City name"
+          },
+          {
+            "name": "Date",
+            "expr": "DATE(date)",
+            "displayName": "Date",
+            "comment": "Date of weather observation"
+          },
+          {
+            "name": "DateTime",
+            "expr": "date",
+            "displayName": "Date and Time",
+            "comment": "Timestamp of weather observation"
+          }
+        ]
+      }
+    },
+    {
+      "name": "weather_data",
+      "displayName": "Weather Data",
+      "queryLines": [
+        "SELECT\n",
+        "  city,\n",
+        "  DATE(date) as date_only,\n",
+        "  AVG(temperature) as avg_temperature,\n",
+        "  AVG(avg_temperature_7d) as avg_temperature_7d,\n",
+        "  MAX(\n",
+        "    CASE\n",
+        "      WHEN alerts = true THEN 1\n",
+        "      ELSE 0\n",
+        "    END\n",
+        "  ) as has_alert\n",
+        "FROM\n",
+        "  weather_openmeteo.gold.weather_kpis\n",
+        "WHERE\n",
+        "  city IN ('Beloit', 'Janesville', 'Madison')\n",
+        "GROUP BY\n",
+        "  city,\n",
+        "  DATE(date)"
+      ]
+    },
+    {
+      "name": "40e24382",
+      "displayName": "weather_daily_kpis",
+      "config": {
+        "version": "1.1",
+        "source": "weather_openmeteo.gold.weather_daily_kpis",
+        "dimensions": [
+          {
+            "name": "date",
+            "expr": "source.date",
+            "displayName": "Date"
+          },
+          {
+            "name": "latitude",
+            "expr": "source.latitude",
+            "displayName": "Latitude"
+          },
+          {
+            "name": "longitude",
+            "expr": "source.longitude",
+            "displayName": "Longitude"
+          },
+          {
+            "name": "city",
+            "expr": "source.city",
+            "displayName": "City"
+          },
+          {
+            "name": "temperature_2m_max",
+            "expr": "source.temperature_2m_max",
+            "displayName": "Temperature 2 M Max"
+          },
+          {
+            "name": "temperature_2m_min",
+            "expr": "source.temperature_2m_min",
+            "displayName": "Temperature 2 M Min"
+          },
+          {
+            "name": "daylight_duration",
+            "expr": "source.daylight_duration",
+            "displayName": "Daylight Duration"
+          },
+          {
+            "name": "wind_speed_10m_max",
+            "expr": "source.wind_speed_10m_max",
+            "displayName": "Wind Speed 10 M Max"
+          },
+          {
+            "name": "avg_temperature_7d",
+            "expr": "source.avg_temperature_7d",
+            "displayName": "Avg Temperature 7 D"
+          },
+          {
+            "name": "alerts_temp",
+            "expr": "source.alerts_temp",
+            "displayName": "Alerts Temp"
+          },
+          {
+            "name": "alerts_wind",
+            "expr": "source.alerts_wind",
+            "displayName": "Alerts Wind"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ]
+      }
+    }
+  ],
+  "pages": [
+    {
+      "name": "1352f2a5",
+      "displayName": "Weather Beloit Janesville Madison",
+      "layout": [
+        {
+          "widget": {
+            "name": "today_temp_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "weather_metrics",
+                  "fields": [
+                    {
+                      "name": "City",
+                      "expression": "`City`"
+                    },
+                    {
+                      "name": "measure(Current Temperature)",
+                      "expression": "MEASURE(`Current Temperature`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Current Temperature - Today",
+                "showDescription": false
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "City",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(Current Temperature)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "avg_temp_line",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "weather_data",
+                  "fields": [
+                    {
+                      "name": "city",
+                      "expression": "`city`"
+                    },
+                    {
+                      "name": "sum(avg_temperature_7d)",
+                      "expression": "SUM(`avg_temperature_7d`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Average Temperature - Last 7 Days"
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "city",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(avg_temperature_7d)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "alert_beloit",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "weather_data",
+                  "fields": [
+                    {
+                      "name": "daily(date_only)",
+                      "expression": "DATE_TRUNC(\"DAY\", `date_only`)"
+                    },
+                    {
+                      "name": "sum(has_alert)",
+                      "expression": "SUM(`has_alert`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "IN_RANGE(`date_only`, PARSE_RELATIVE_DATE('now/d', 'FLOOR'), PARSE_RELATIVE_DATE('now/d', 'CEIL'))"
+                    }
+                  ],
+                  "disaggregated": false,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "DATE_TRUNC(\"DAY\", `date_only`)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Alerts - Beloit",
+                "contentAlignment": "center"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(has_alert)"
+                },
+                "period": {
+                  "fieldName": "daily(date_only)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "alert_janesville",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "weather_data",
+                  "fields": [
+                    {
+                      "name": "daily(date_only)",
+                      "expression": "DATE_TRUNC(\"DAY\", `date_only`)"
+                    },
+                    {
+                      "name": "sum(has_alert)",
+                      "expression": "SUM(`has_alert`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "IN_RANGE(`date_only`, PARSE_RELATIVE_DATE('now/d', 'FLOOR'), PARSE_RELATIVE_DATE('now/d', 'CEIL'))"
+                    }
+                  ],
+                  "disaggregated": false,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "DATE_TRUNC(\"DAY\", `date_only`)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Alerts - Janesville",
+                "contentAlignment": "center"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(has_alert)"
+                },
+                "period": {
+                  "fieldName": "daily(date_only)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 7,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "alert_madison",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "weather_data",
+                  "fields": [
+                    {
+                      "name": "daily(date_only)",
+                      "expression": "DATE_TRUNC(\"DAY\", `date_only`)"
+                    },
+                    {
+                      "name": "sum(has_alert)",
+                      "expression": "SUM(`has_alert`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "IN_RANGE(`date_only`, PARSE_RELATIVE_DATE('now/d', 'FLOOR'), PARSE_RELATIVE_DATE('now/d', 'CEIL'))"
+                    }
+                  ],
+                  "disaggregated": false,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "DATE_TRUNC(\"DAY\", `date_only`)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Alerts - Madison",
+                "contentAlignment": "center"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(has_alert)"
+                },
+                "period": {
+                  "fieldName": "daily(date_only)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 7,
+            "width": 4,
+            "height": 3
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
